@@ -1,7 +1,8 @@
 import os
 import sys
-
 from load import data_loader
+
+os.chdir(os.path.dirname(__file__))
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
