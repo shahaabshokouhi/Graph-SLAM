@@ -20,9 +20,9 @@ def warp2pi(angle_rad):
 
 def upper_triangular_matrix_to_full_matrix(arr, n):
 
-    triu0 = np.triu_indices(n, 0)
-    triu1 = np.triu_indices(n, 1)
-    tril1 = np.tril_indices(n, -1)
+    triu0 = np.triu_indices(n, 0) # indices of the upper triangular part
+    triu1 = np.triu_indices(n, 1) # indices of the upper triangular part excluding the diagonal
+    tril1 = np.tril_indices(n, -1) # indices of the lower triangular part excluding the diagonal
 
     mat = np.zeros((n, n), dtype=np.float64)
     mat[triu0] = arr

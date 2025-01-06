@@ -27,15 +27,23 @@ class Graph:
         self._link_edges()
 
     def _link_edges(self):
+        
+        """
+        In this case, the id and index of the vertices are the same, so we can use the index as the id, 
+        but in general, this is not the case, so we need to create a mapping between the two. For example, 
+        the id of the first seen vertice might be 100, but its index is 0. index is the position of the 
+        vertex in the list of vertices, while id is the id of the vertex
 
-        index_id_dict = {i: v.id for i, v in enumerate(self._vertices)}
-        id_index_dict = {v_id: v_index for v_index, v_id in index_id_dict.items()}
+        """
+
+        index_id_dict = {i: v.id for i, v in enumerate(self._vertices)} # vertex index to vertex id
+        id_index_dict = {v_id: v_index for v_index, v_id in index_id_dict.items()} # vertex id to vertex index
 
         for v in self._vertices:
             v.index = id_index_dict[v.id]
 
         for e in self._edges:
-            e.vertices = [self._vertices[id_index_dict[v_id]] for v_id in e.vertex_ids]
+            e.vertices = [self._vertices[id_index_dict[v_id]] for v_id in e.vertex_ids] # get the vertex object from the vertex id and assign it to the edge
 
     def add_edge(self, vertices, measurement, information):
         edge = EdgeOdometry(
@@ -64,10 +72,13 @@ class Graph:
     def _calc_chi2_grad_hess(self):
         n = len(self._vertices)
         dim = len(self._vertices[0].pose.arr.squeeze())
+        debug_var1 = (e.calc_chi2_gradient_hessian() for e in self._edges)
+        debug_var2 = _Chi2GradientHessian(dim)
+        
         chi2_gradient_hessian = reduce(
             _Chi2GradientHessian.update,
-            (e.calc_chi2_gradient_hessian() for e in self._edges),
-            _Chi2GradientHessian(dim),
+            debug_var1,
+            debug_var2,
         )
         # breakpoint()
         self._chi2 = chi2_gradient_hessian.chi2[0, 0]
@@ -78,7 +89,7 @@ class Graph:
             self._gradient[idx * dim : (idx + 1) * dim] += contrib
 
         # Populate the Hessian matrix
-        self._hessian = lil_matrix((n * dim, n * dim), dtype=np.float64)
+        self._hessian = lil_matrix((n * dim, n * dim), dtype=np.float64) # lil_matrix is a list of lists sparse matrix
         for (row_idx, col_idx), contrib in chi2_gradient_hessian.hessian.items():
             self._hessian[
                 row_idx * dim : (row_idx + 1) * dim, col_idx * dim : (col_idx + 1) * dim
@@ -92,8 +103,8 @@ class Graph:
                 ] = np.transpose(contrib)
 
     def optimize(self, tol=1e-4, max_iter=40, fix_first_pose=True):
-        n = len(self._vertices)
-        dim = len(self._vertices[0].pose.arr.squeeze())
+        n = len(self._vertices) # number of vertices
+        dim = len(self._vertices[0].pose.arr.squeeze()) # dimension of the pose (here 3)
 
         prev_chi2_err = -1
 

@@ -61,20 +61,20 @@ class EdgeOdometry:
         jacobians = self.calc_jacobians()
 
         return (
-            chi2,
+            chi2, # error * information * error
             {
                 v.index: np.dot(
                     np.dot(np.transpose(err.arr.squeeze()), self.information), jacobian
                 )
                 for v, jacobian in zip(self.vertices, jacobians)
-            },
+            }, # error * information * jacobian or [bij], refer to the formula in the paper
             {
                 (self.vertices[i].index, self.vertices[j].index): np.dot(
                     np.dot(np.transpose(jacobians[i]), self.information), jacobians[j]
                 )
                 for i in range(len(jacobians))
                 for j in range(i, len(jacobians))
-            },
+            }, # jacobian * information * jacobian or [Hij], refer to the formula in the paper
         )
 
     def calc_jacobians(self):
@@ -116,6 +116,7 @@ class EdgeOdometry:
             The Jacobian of the edge with respect to the specified vertex's pose
 
         """
+
         jacobian = np.zeros(err.arr.squeeze().shape + (dim,))
         p0 = self.vertices[vertex_index].pose.copy()
         # breakpoint()
